@@ -1,5 +1,10 @@
 package com.example.javatrainner;
 
+import android.hardware.camera2.CameraAccessException;
+import android.hardware.camera2.CameraCharacteristics;
+import android.hardware.camera2.CameraManager;
+import android.util.SizeF;
+import android.widget.TextView;
 import android.widget.Toast;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
@@ -21,17 +26,22 @@ import com.google.mediapipe.components.PermissionHelper;
 import com.google.mediapipe.framework.AndroidAssetUtil;
 import com.google.mediapipe.glutil.EglManager;
 
+import android.hardware.Sensor;
+import android.hardware.SensorManager;
+import android.hardware.SensorEventListener;
+import android.hardware.SensorEvent;
+import java.util.List;
+
 import com.google.mediapipe.formats.proto.LandmarkProto.NormalizedLandmarkList;
 import com.google.mediapipe.framework.PacketGetter;
 import com.google.protobuf.InvalidProtocolBufferException;
-import com.google.mediapipe.formats.proto.LandmarkProto.NormalizedLandmark;
 
 public class MainActivity extends AppCompatActivity {
     private static final String TAG = "MainActivity";
     private static final String OUTPUT_LANDMARKS_STREAM_NAME = "pose_landmarks";
     private static final boolean FLIP_FRAMES_VERTICALLY = true;
     private static final int NUM_BUFFERS = 2;
-    private static final CameraHelper.CameraFacing CAMERA_FACING = CameraHelper.CameraFacing.BACK;
+    private static final CameraHelper.CameraFacing CAMERA_FACING = CameraHelper.CameraFacing.FRONT;
 
     static {
         // Load all native libraries needed by the app.
@@ -50,12 +60,13 @@ public class MainActivity extends AppCompatActivity {
     private EglManager eglManager;
     private ExternalTextureConverter converter;
     private ApplicationInfo applicationInfo;
+    private AnnotationsProcessor annotationsProcessor = new AnnotationsProcessor();
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(getContentViewLayoutResId());
-
         try {
             applicationInfo =
                     getPackageManager().getApplicationInfo(getPackageName(), PackageManager.GET_META_DATA);
@@ -63,6 +74,8 @@ public class MainActivity extends AppCompatActivity {
             Log.e(TAG, "Cannot find application info: " + e);
         }
 
+        TextView testingBox = findViewById(R.id.TestingBox);
+        this.initAccelerometer();
         previewDisplayView = new SurfaceView(this);
         setupPreviewDisplayView();
 
@@ -87,35 +100,42 @@ public class MainActivity extends AppCompatActivity {
                     try {
                         byte[] landmarksRaw = PacketGetter.getProtoBytes(packet);
                         NormalizedLandmarkList poseLandmarks = NormalizedLandmarkList.parseFrom(landmarksRaw);
-//                        NormalizedLandmarkList poseLandmarks =
-//                                PacketGetter.getProto(packet, NormalizedLandmarkList.class);
-//                        long timeStamp = packet.getTimestamp();
-                        String pose_string = getPoseLandmarksDebugString(poseLandmarks);
+                        long timeStamp = packet.getTimestamp();
+                        annotationsProcessor.setNewState(poseLandmarks);
+//                        String leftAng = String.valueOf(annotationsProcessor.calculateAngle("LHip", "LKnee", "LAnkle"));
+//                        String rightAng = String.valueOf(annotationsProcessor.calculateAngle("RHip", "RKnee", "RAnkle"));
+//                        testingBox.setText("Left: " + leftAng + "\n" + "Right: " + rightAng);
+                        annotationsProcessor.threeDimConvertor.setCameraCharacteristics();
+                        String posAng = String.valueOf(annotationsProcessor.threeDimConvertor.getCameraAbsAng());
+                        String cameraAng = String.valueOf(annotationsProcessor.threeDimConvertor.getCameraAng());
+                        String poseValues = annotationsProcessor.getPoseDetectionsValues();
+                        annotationsProcessor.setPhoneHeight();
+                        float phoneHeight = annotationsProcessor.phoneHeight;
+                        String lowesVal = annotationsProcessor.lowestPointName + ": " + String.valueOf(annotationsProcessor.lowestPoint);
+                        testingBox.setText(posAng + '\n' + cameraAng + "\n" + lowesVal + "\n" + phoneHeight);
                     } catch (InvalidProtocolBufferException exception) {
                         Log.e(TAG, "Failed to get proto.", exception);
                     }
                 });
-
         PermissionHelper.checkAndRequestCameraPermissions(this);
     }
 
-    private static String getPoseLandmarksDebugString(NormalizedLandmarkList poseLandmarks) {
-        String poseLandmarkStr = "Pose landmarks: " + poseLandmarks.getLandmarkCount() + "\n";
-        int landmarkIndex = 0;
-        for (NormalizedLandmark landmark : poseLandmarks.getLandmarkList()) {
-            poseLandmarkStr +=
-                    "\tLandmark ["
-                            + landmarkIndex
-                            + "]: ("
-                            + landmark.getX()
-                            + ", "
-                            + landmark.getY()
-                            + ", "
-                            + landmark.getZ()
-                            + ")\n";
-            ++landmarkIndex;
+    private void initAccelerometer(){
+        SensorManager sm = (SensorManager) getSystemService(SENSOR_SERVICE);
+        SensorEventListener sel = new SensorEventListener(){
+            public void onAccuracyChanged(Sensor sensor, int accuracy) {}
+            public void onSensorChanged(SensorEvent event) {
+                float[] values = event.values;
+                annotationsProcessor.setAccelerometerValues(values);
+            }
+        };
+        List<Sensor> list;
+        list = sm.getSensorList(Sensor.TYPE_ACCELEROMETER);
+        if(list.size()>0){
+            sm.registerListener(sel, list.get(0), SensorManager.SENSOR_DELAY_NORMAL);
+        }else{
+            Toast.makeText(getBaseContext(), "Error: No Accelerometer.", Toast.LENGTH_LONG).show();
         }
-        return poseLandmarkStr;
     }
 
     // Used to obtain the content view for this application. If you are extending this class, and
@@ -135,7 +155,12 @@ public class MainActivity extends AppCompatActivity {
                 applicationInfo.metaData.getBoolean("flipFramesVertically", FLIP_FRAMES_VERTICALLY));
         converter.setConsumer(processor);
         if (PermissionHelper.cameraPermissionsGranted(this)) {
-            startCamera();
+            try{
+                startCamera();
+            } catch (CameraAccessException e){
+                Log.e(TAG, "Hi");
+            }
+
         }
     }
 
@@ -166,7 +191,7 @@ public class MainActivity extends AppCompatActivity {
         return null; // No preference and let the camera (helper) decide.
     }
 
-    public void startCamera() {
+    public void startCamera() throws CameraAccessException {
         cameraHelper = new CameraXPreviewHelper();
         previewFrameTexture = converter.getSurfaceTexture();
         cameraHelper.setOnCameraStartedListener(
@@ -174,11 +199,14 @@ public class MainActivity extends AppCompatActivity {
                     onCameraStarted(surfaceTexture);
                 });
         CameraHelper.CameraFacing cameraFacing =
-                applicationInfo.metaData.getBoolean("cameraFacingFront", false)
+                applicationInfo.metaData.getBoolean("cameraFacingFront", true)
                         ? CameraHelper.CameraFacing.FRONT
                         : CameraHelper.CameraFacing.BACK;
         cameraHelper.startCamera(
                 this, cameraFacing, previewFrameTexture, cameraTargetResolution());
+        CameraManager manager = (CameraManager) getSystemService(CAMERA_SERVICE);
+        annotationsProcessor.threeDimConvertor.cameraManager = manager;
+
     }
 
     protected Size computeViewSize(int width, int height) {
@@ -193,7 +221,8 @@ public class MainActivity extends AppCompatActivity {
         Size viewSize = computeViewSize(width, height);
         Size displaySize = cameraHelper.computeDisplaySizeFromViewSize(viewSize);
         boolean isCameraRotated = cameraHelper.isCameraRotated();
-
+        annotationsProcessor.threeDimConvertor.viewSize = viewSize;
+        annotationsProcessor.threeDimConvertor.displaySize = displaySize;
         // Configure the output width and height as the computed display size.
         converter.setDestinationSize(
                 isCameraRotated ? displaySize.getHeight() : displaySize.getWidth(),

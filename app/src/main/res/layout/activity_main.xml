@@ -7,13 +7,9 @@
 
     <FrameLayout
         android:id="@+id/preview_display_layout"
-        android:layout_width="0dp"
-        android:layout_height="0dp"
-        android:layout_weight="1"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent">
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_weight="1">
 
         <TextView
             android:id="@+id/no_camera_access_view"
@@ -21,5 +17,15 @@
             android:layout_height="fill_parent"
             android:gravity="center"
             android:text="@string/no_camera_access" />
+
     </FrameLayout>
+
+    <TextView
+        android:id="@+id/TestingBox"
+        android:layout_width="match_parent"
+        android:layout_height="290dp"
+        android:background="#F49494"
+        android:textSize="20sp"
+        app:layout_constraintTop_toTopOf="parent" />
+
 </androidx.constraintlayout.widget.ConstraintLayout>
