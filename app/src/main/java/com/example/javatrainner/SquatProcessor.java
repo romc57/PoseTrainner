@@ -1,5 +1,7 @@
 package com.example.javatrainner;
 
+import android.util.Log;
+
 import com.google.mediapipe.formats.proto.LandmarkProto;
 
 import java.util.ArrayList;
@@ -10,15 +12,21 @@ public class SquatProcessor extends AnnotationsProcessor{
     private static final String[] squatLandMarks = {"Nose", "LEye_i", "LEye", "REye_o", "REye_i",
             "REye", "REye_o", "LEar", "REar", "LLip", "RLip", "LShoulder", "RShoulder", "LHip",
             "RHip", "LKnee", "RKnee", "LAnkle", "RAnkle", "LHeel", "RHeel", "LTows", "RTows"};
-    private static final int fullRepDegrees = 90;
-    private int kneeDegreesDelta = 20;
+    private static final int fullRepDegrees = 85;
+    private final String TAG = "SquatProcessor";
+    private int kneeDegreesDelta = 5;
     private static final String checkPositionLandmark = "LAnkle";
-    private double checkPositionDelta = 0.15;
-
+    private double checkPositionDelta = 0.1;
+    private TechniqueClassifier techniqueClassifier = new TechniqueClassifier();
     private HashMap<String, ArrayList<Float>> currentSquatState = null;
-    private Integer smallestKneeAngle = null;
-    private Integer biggestKneeAngle = null;
+    private Integer smallestLeftKneeAngle = null;
+    private Integer biggestLeftKneeAngle = null;
+    private Integer smallestRightKneeAngle = null;
+    private Integer biggestRightKneeAngle = null;
+    private String currentTag;
+    private String currentInstruction = "Squat away!";
     private boolean goodDetection = false;
+    private int goodCount = 0;
     private int repCount = 0;
     private ArrayList<Float> currentSquatPos = null;
 
@@ -29,30 +37,43 @@ public class SquatProcessor extends AnnotationsProcessor{
         this.captureSquat();
     }
 
+    private void setClassification(){
+        this.goodCount++;
+        this.currentInstruction = "Great Job!";
+    }
+
     void captureSquat(){
         this.checkSquatPosition();
         Integer lAngle = this.calculateAngle("LHip", "LKnee", "LAnkle");
         Integer rAngle = this.calculateAngle("RHip", "RKnee", "RAnkle");
+        Log.i(this.TAG, "Angles: " + String.valueOf(rAngle) + " " + String.valueOf(lAngle));
+        Log.i(this.TAG, "RepCount: " + String.valueOf(this.repCount));
         if(lAngle == null || rAngle == null){return;}
-        int averageAngle = (lAngle + rAngle) / 2;
-        if (this.smallestKneeAngle == null || this.biggestKneeAngle == null){
-            this.smallestKneeAngle = this.biggestKneeAngle = averageAngle;
-            this.addToCapturedRep(this.currentSquatState);
-        }  else if (averageAngle < this.smallestKneeAngle){
-            this.smallestKneeAngle = averageAngle;
-            this.addToCapturedRep(this.currentSquatState);
-        } else if (this.smallestKneeAngle < averageAngle &&
-                averageAngle < this.biggestKneeAngle - this.kneeDegreesDelta){
-            this.addToCapturedRep(this.currentSquatState);
-        } else if (averageAngle > this.biggestKneeAngle - this.kneeDegreesDelta){
-            if (this.biggestKneeAngle - this.smallestKneeAngle < fullRepDegrees){
-                this.resetCapturedRep();
-                this.biggestKneeAngle = this.smallestKneeAngle = averageAngle;
+        if (this.smallestLeftKneeAngle == null || this.biggestLeftKneeAngle == null){
+            this.smallestLeftKneeAngle = this.biggestLeftKneeAngle = lAngle;
+            this.smallestRightKneeAngle = this.biggestRightKneeAngle = rAngle;
+        } if (lAngle < this.smallestLeftKneeAngle) {
+            this.smallestLeftKneeAngle = lAngle;
+        } if (rAngle < this.smallestRightKneeAngle) {
+            this.smallestRightKneeAngle = rAngle;
+        } if ((lAngle > (this.biggestLeftKneeAngle - this.kneeDegreesDelta)) ||
+                (rAngle > (this.biggestRightKneeAngle - this.kneeDegreesDelta))){
+            if (Math.abs(this.biggestLeftKneeAngle - this.smallestLeftKneeAngle) < fullRepDegrees &&
+                    Math.abs(this.biggestRightKneeAngle - this.smallestRightKneeAngle) < fullRepDegrees){
+                this.smallestRightKneeAngle = this.biggestRightKneeAngle = rAngle;
+                this.smallestLeftKneeAngle = this.biggestLeftKneeAngle = lAngle;
             } else {
                 this.repCount++;
-                this.biggestKneeAngle = this.smallestKneeAngle = null;
-                this.resetCapturedRep(); // Here capture the motion
+                this.setClassification();
+                this.addToCapturedRep(this.currentSquatState);
+                this.endCapture();
+                this.resetCapturedRep();
+                this.smallestRightKneeAngle = this.biggestRightKneeAngle = null;
+                this.smallestLeftKneeAngle = this.biggestLeftKneeAngle = null;
             }
+            this.resetCapturedRep();
+        } else {
+            this.addToCapturedRep(this.currentSquatState);
         }
     }
 
@@ -74,14 +95,15 @@ public class SquatProcessor extends AnnotationsProcessor{
         ArrayList<Float> refPoint = this.currentSquatState.get(checkPositionLandmark);
         if (this.currentSquatPos == null){
             this.currentSquatPos = refPoint;
-            this.smallestKneeAngle = this.biggestKneeAngle = null;
+            this.smallestLeftKneeAngle = this.biggestLeftKneeAngle = null;
             this.resetCapturedRep();
         } else {
             for (int i = 0; i < 2; i++){
                 if (Math.abs(this.currentSquatPos.get(i) - refPoint.get(i)) > checkPositionDelta){
                     this.currentSquatPos = refPoint;
                     this.resetCapturedRep();
-                    this.smallestKneeAngle = this.biggestKneeAngle = null;
+                    this.smallestLeftKneeAngle = this.biggestLeftKneeAngle = null;
+                    this.smallestRightKneeAngle = this.biggestRightKneeAngle = null;
                 }
             }
         }
@@ -91,13 +113,17 @@ public class SquatProcessor extends AnnotationsProcessor{
         return this.repCount;
     }
 
-    ArrayList<Integer> getKneeAngleRange(){
-        if (this.biggestKneeAngle == null || this.smallestKneeAngle == null){return null;}
-        ArrayList<Integer> output = new ArrayList<>();
-        output.add(this.smallestKneeAngle);
-        output.add(this.biggestKneeAngle);
-        return output;
+    float getSuccessPercentage() {
+        if (this.repCount != 0){
+            return (float) this.goodCount / this.repCount;
+        } else {
+            return 0;
+        }
     }
+
+    int getGoodRepCount() {return this.goodCount;}
+
+    String getCurrentInstruction() {return this.currentInstruction;}
 
     void setKneeDegreesDelta(int newVal){
         this.kneeDegreesDelta = newVal;

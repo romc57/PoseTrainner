@@ -2,4 +2,5 @@
     <string name="app_name">GoPerformance</string>
     <string name="no_camera_access_txt">Please grant camera permissions</string>
     <string name="end">End</string>
+    <string name="squat_instruction">Squat</string>
 </resources>

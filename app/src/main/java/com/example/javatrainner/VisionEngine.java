@@ -47,17 +47,16 @@ public class VisionEngine {
     private EglManager eglManager;
     private ExternalTextureConverter converter;
     private ApplicationInfo applicationInfo = null;
-    private SquatProcessor squatProcessor = null;
+    private AnnotationsProcessor annotationsProcessor = null;
     private Context context = null;
-    private CameraManager cameraSystemcService = null;
+    private CameraHelper.CameraFacing cameraFacing = CameraHelper.CameraFacing.FRONT;
 
-    VisionEngine(SquatProcessor squatProcessor, SurfaceView surfaceView,
-                 ApplicationInfo applicationInfo, Context main, CameraManager cameraService){
-        this.squatProcessor = squatProcessor;
+    VisionEngine(AnnotationsProcessor annotationsProcessor, SurfaceView surfaceView,
+                 ApplicationInfo applicationInfo, Context main){
+        this.annotationsProcessor = annotationsProcessor;
         this.previewDisplayView = surfaceView;
         this.applicationInfo = applicationInfo;
         this.context = main;
-        this.cameraSystemcService = cameraService;
     }
 
     void startVision(){
@@ -80,12 +79,22 @@ public class VisionEngine {
                     try {
                         byte[] landmarksRaw = PacketGetter.getProtoBytes(packet);
                         LandmarkProto.NormalizedLandmarkList poseLandmarks = LandmarkProto.NormalizedLandmarkList.parseFrom(landmarksRaw);
-                        squatProcessor.setNewState(poseLandmarks);
+                        annotationsProcessor.setNewState(poseLandmarks);
                     } catch (InvalidProtocolBufferException exception) {
                         Log.e(TAG, "Failed to get proto.", exception);
                     }
                 });
         PermissionHelper.checkAndRequestCameraPermissions((Activity) this.context);
+    }
+
+    public void flipCamera(){
+        if (this.cameraFacing == CameraHelper.CameraFacing.FRONT){
+            this.cameraFacing = CameraHelper.CameraFacing.BACK;
+        } else {
+            this.cameraFacing = CameraHelper.CameraFacing.FRONT;
+        }
+        this.onPause();
+        this.onResume();
     }
 
     protected void onResume() {
@@ -128,15 +137,11 @@ public class VisionEngine {
                 surfaceTexture -> {
                     onCameraStarted(surfaceTexture);
                 });
-        CameraHelper.CameraFacing cameraFacing =
-                applicationInfo.metaData.getBoolean("cameraFacingFront", true)
-                        ? CameraHelper.CameraFacing.FRONT
-                        : CameraHelper.CameraFacing.BACK;
         cameraHelper.startCamera(
-                (Activity) this.context, cameraFacing, previewFrameTexture, cameraTargetResolution());
+                (Activity) this.context, this.cameraFacing, previewFrameTexture, cameraTargetResolution());
         AndroidAssetUtil.initializeNativeAssetManager(this.context);
-        CameraManager manager = this.cameraSystemcService;
     }
+
 
     protected Size computeViewSize(int width, int height) {
         return new Size(width, height);

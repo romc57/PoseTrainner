@@ -94,4 +94,6 @@ public class AnnotationsProcessor {
     void resetCapturedRep(){
         this.capturedRep = new ArrayList<HashMap>();
     }
+
+    public void endCapture(){return;}
 }
