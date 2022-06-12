@@ -1,176 +1,50 @@
 package com.example.javatrainner;
 
+import android.app.Activity;
 import android.hardware.camera2.CameraAccessException;
-import android.hardware.camera2.CameraCharacteristics;
 import android.hardware.camera2.CameraManager;
-import android.util.SizeF;
-import android.widget.TextView;
-import android.widget.Toast;
-import android.content.pm.ApplicationInfo;
-import android.content.pm.PackageManager;
-import android.content.pm.PackageManager.NameNotFoundException;
-import android.graphics.SurfaceTexture;
-import android.os.Bundle;
-import androidx.appcompat.app.AppCompatActivity;
-import android.util.Log;
-import android.util.Size;
-import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.view.View;
 import android.view.ViewGroup;
-import com.google.mediapipe.components.CameraHelper;
-import com.google.mediapipe.components.CameraXPreviewHelper;
+import android.widget.TextView;
+import android.content.pm.ApplicationInfo;
+import android.content.pm.PackageManager;
+import android.content.pm.PackageManager.NameNotFoundException;
+import android.os.Bundle;
+import androidx.appcompat.app.AppCompatActivity;
+import android.util.Log;
+import androidx.appcompat.app.AppCompatActivity;
 import com.google.mediapipe.components.ExternalTextureConverter;
-import com.google.mediapipe.components.FrameProcessor;
 import com.google.mediapipe.components.PermissionHelper;
 import com.google.mediapipe.framework.AndroidAssetUtil;
-import com.google.mediapipe.glutil.EglManager;
 
-import android.hardware.Sensor;
-import android.hardware.SensorManager;
-import android.hardware.SensorEventListener;
-import android.hardware.SensorEvent;
-import java.util.List;
-
-import com.google.mediapipe.formats.proto.LandmarkProto.NormalizedLandmarkList;
-import com.google.mediapipe.framework.PacketGetter;
-import com.google.protobuf.InvalidProtocolBufferException;
 
 public class MainActivity extends AppCompatActivity {
     private static final String TAG = "MainActivity";
-    private static final String OUTPUT_LANDMARKS_STREAM_NAME = "pose_landmarks";
-    private static final boolean FLIP_FRAMES_VERTICALLY = true;
-    private static final int NUM_BUFFERS = 2;
-    private static final CameraHelper.CameraFacing CAMERA_FACING = CameraHelper.CameraFacing.FRONT;
-
-    static {
-        // Load all native libraries needed by the app.
-        System.loadLibrary("mediapipe_jni");
-        try {
-            System.loadLibrary("opencv_java3");
-        } catch (java.lang.UnsatisfiedLinkError e) {
-            // Some example apps (e.g. template matching) require OpenCV 4.
-            System.loadLibrary("opencv_java4");
-        }
-    }
-    protected FrameProcessor processor;
-    protected CameraXPreviewHelper cameraHelper;
-    private SurfaceTexture previewFrameTexture;
-    private SurfaceView previewDisplayView;
-    private EglManager eglManager;
-    private ExternalTextureConverter converter;
+    private final SquatProcessor squatProcessor = new SquatProcessor();
+    SurfaceView previewDisplayView;
+    ViewGroup viewGroup;
     private ApplicationInfo applicationInfo;
-    private AnnotationsProcessor annotationsProcessor = new AnnotationsProcessor();
-
+    private VisionEngine visionEngine = null;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(getContentViewLayoutResId());
+        setContentView(R.layout.technique_correct);
+        previewDisplayView = new SurfaceView(this);
+        previewDisplayView.setVisibility(View.GONE);
+        viewGroup = findViewById(R.id.PosePresent);
+        viewGroup.addView(previewDisplayView);
         try {
             applicationInfo =
                     getPackageManager().getApplicationInfo(getPackageName(), PackageManager.GET_META_DATA);
-        } catch (NameNotFoundException e) {
+        } catch (PackageManager.NameNotFoundException e) {
             Log.e(TAG, "Cannot find application info: " + e);
         }
-
-        TextView testingBox = findViewById(R.id.TestingBox);
-        this.initAccelerometer();
-        previewDisplayView = new SurfaceView(this);
-        setupPreviewDisplayView();
-
-        // Initialize asset manager so that MediaPipe native libraries can access the app assets, e.g.,
-        // binary graphs.
-        AndroidAssetUtil.initializeNativeAssetManager(this);
-        eglManager = new EglManager(null);
-        processor =
-                new FrameProcessor(
-                        this,
-                        eglManager.getNativeContext(),
-                        applicationInfo.metaData.getString("binaryGraphName"),
-                        applicationInfo.metaData.getString("inputVideoStreamName"),
-                        applicationInfo.metaData.getString("outputVideoStreamName"));
-        processor
-                .getVideoSurfaceOutput()
-                .setFlipY(
-                        applicationInfo.metaData.getBoolean("flipFramesVertically", FLIP_FRAMES_VERTICALLY));
-        processor.addPacketCallback(
-                OUTPUT_LANDMARKS_STREAM_NAME,
-                (packet) -> {
-                    try {
-                        byte[] landmarksRaw = PacketGetter.getProtoBytes(packet);
-                        NormalizedLandmarkList poseLandmarks = NormalizedLandmarkList.parseFrom(landmarksRaw);
-                        long timeStamp = packet.getTimestamp();
-                        annotationsProcessor.setNewState(poseLandmarks);
-//                        String leftAng = String.valueOf(annotationsProcessor.calculateAngle("LHip", "LKnee", "LAnkle"));
-//                        String rightAng = String.valueOf(annotationsProcessor.calculateAngle("RHip", "RKnee", "RAnkle"));
-//                        testingBox.setText("Left: " + leftAng + "\n" + "Right: " + rightAng);
-                        annotationsProcessor.threeDimConvertor.setCameraCharacteristics();
-                        String posAng = String.valueOf(annotationsProcessor.threeDimConvertor.getCameraAbsAng());
-                        String cameraAng = String.valueOf(annotationsProcessor.threeDimConvertor.getCameraAng());
-                        String poseValues = annotationsProcessor.getPoseDetectionsValues();
-                        annotationsProcessor.setPhoneHeight();
-                        float phoneHeight = annotationsProcessor.phoneHeight;
-                        String lowesVal = annotationsProcessor.lowestPointName + ": " + String.valueOf(annotationsProcessor.lowestPoint);
-                        testingBox.setText(posAng + '\n' + cameraAng + "\n" + lowesVal + "\n" + phoneHeight);
-                    } catch (InvalidProtocolBufferException exception) {
-                        Log.e(TAG, "Failed to get proto.", exception);
-                    }
-                });
-        PermissionHelper.checkAndRequestCameraPermissions(this);
-    }
-
-    private void initAccelerometer(){
-        SensorManager sm = (SensorManager) getSystemService(SENSOR_SERVICE);
-        SensorEventListener sel = new SensorEventListener(){
-            public void onAccuracyChanged(Sensor sensor, int accuracy) {}
-            public void onSensorChanged(SensorEvent event) {
-                float[] values = event.values;
-                annotationsProcessor.setAccelerometerValues(values);
-            }
-        };
-        List<Sensor> list;
-        list = sm.getSensorList(Sensor.TYPE_ACCELEROMETER);
-        if(list.size()>0){
-            sm.registerListener(sel, list.get(0), SensorManager.SENSOR_DELAY_NORMAL);
-        }else{
-            Toast.makeText(getBaseContext(), "Error: No Accelerometer.", Toast.LENGTH_LONG).show();
-        }
-    }
-
-    // Used to obtain the content view for this application. If you are extending this class, and
-    // have a custom layout, override this method and return the custom layout.
-    protected int getContentViewLayoutResId() {
-        return R.layout.activity_main;
-    }
-
-    @Override
-    protected void onResume() {
-        super.onResume();
-        converter =
-                new ExternalTextureConverter(
-                        eglManager.getContext(),
-                        applicationInfo.metaData.getInt("converterNumBuffers", NUM_BUFFERS));
-        converter.setFlipY(
-                applicationInfo.metaData.getBoolean("flipFramesVertically", FLIP_FRAMES_VERTICALLY));
-        converter.setConsumer(processor);
-        if (PermissionHelper.cameraPermissionsGranted(this)) {
-            try{
-                startCamera();
-            } catch (CameraAccessException e){
-                Log.e(TAG, "Hi");
-            }
-
-        }
-    }
-
-    @Override
-    protected void onPause() {
-        super.onPause();
-        converter.close();
-
-        // Hide preview display until we re-open the camera again.
-        previewDisplayView.setVisibility(View.GONE);
+        CameraManager systemCameraService = (CameraManager) getSystemService(CAMERA_SERVICE);
+        this.visionEngine = new VisionEngine(this.squatProcessor, previewDisplayView, applicationInfo,
+                this, systemCameraService);
+        this.visionEngine.startVision();
     }
 
     @Override
@@ -180,78 +54,16 @@ public class MainActivity extends AppCompatActivity {
         PermissionHelper.onRequestPermissionsResult(requestCode, permissions, grantResults);
     }
 
-    protected void onCameraStarted(SurfaceTexture surfaceTexture) {
-        previewFrameTexture = surfaceTexture;
-        // Make the display view visible to start showing the preview. This triggers the
-        // SurfaceHolder.Callback added to (the holder of) previewDisplayView.
-        previewDisplayView.setVisibility(View.VISIBLE);
+    @Override
+    protected void onResume() {
+        super.onResume();
+        this.visionEngine.onResume();
     }
 
-    protected Size cameraTargetResolution() {
-        return null; // No preference and let the camera (helper) decide.
+    @Override
+    protected void onPause() {
+        super.onPause();
+        this.visionEngine.onPause();
     }
 
-    public void startCamera() throws CameraAccessException {
-        cameraHelper = new CameraXPreviewHelper();
-        previewFrameTexture = converter.getSurfaceTexture();
-        cameraHelper.setOnCameraStartedListener(
-                surfaceTexture -> {
-                    onCameraStarted(surfaceTexture);
-                });
-        CameraHelper.CameraFacing cameraFacing =
-                applicationInfo.metaData.getBoolean("cameraFacingFront", true)
-                        ? CameraHelper.CameraFacing.FRONT
-                        : CameraHelper.CameraFacing.BACK;
-        cameraHelper.startCamera(
-                this, cameraFacing, previewFrameTexture, cameraTargetResolution());
-        CameraManager manager = (CameraManager) getSystemService(CAMERA_SERVICE);
-        annotationsProcessor.threeDimConvertor.cameraManager = manager;
-
-    }
-
-    protected Size computeViewSize(int width, int height) {
-        return new Size(width, height);
-    }
-
-    protected void onPreviewDisplaySurfaceChanged(
-            SurfaceHolder holder, int format, int width, int height) {
-        // (Re-)Compute the ideal size of the camera-preview display (the area that the
-        // camera-preview frames get rendered onto, potentially with scaling and rotation)
-        // based on the size of the SurfaceView that contains the display.
-        Size viewSize = computeViewSize(width, height);
-        Size displaySize = cameraHelper.computeDisplaySizeFromViewSize(viewSize);
-        boolean isCameraRotated = cameraHelper.isCameraRotated();
-        annotationsProcessor.threeDimConvertor.viewSize = viewSize;
-        annotationsProcessor.threeDimConvertor.displaySize = displaySize;
-        // Configure the output width and height as the computed display size.
-        converter.setDestinationSize(
-                isCameraRotated ? displaySize.getHeight() : displaySize.getWidth(),
-                isCameraRotated ? displaySize.getWidth() : displaySize.getHeight());
-    }
-
-    private void setupPreviewDisplayView() {
-        previewDisplayView.setVisibility(View.GONE);
-        ViewGroup viewGroup = findViewById(R.id.preview_display_layout);
-        viewGroup.addView(previewDisplayView);
-
-        previewDisplayView
-                .getHolder()
-                .addCallback(
-                        new SurfaceHolder.Callback() {
-                            @Override
-                            public void surfaceCreated(SurfaceHolder holder) {
-                                processor.getVideoSurfaceOutput().setSurface(holder.getSurface());
-                            }
-
-                            @Override
-                            public void surfaceChanged(SurfaceHolder holder, int format, int width, int height) {
-                                onPreviewDisplaySurfaceChanged(holder, format, width, height);
-                            }
-
-                            @Override
-                            public void surfaceDestroyed(SurfaceHolder holder) {
-                                processor.getVideoSurfaceOutput().setSurface(null);
-                            }
-                        });
-    }
 }
