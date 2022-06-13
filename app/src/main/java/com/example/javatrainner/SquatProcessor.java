@@ -1,11 +1,15 @@
 package com.example.javatrainner;
 
+import android.content.Context;
 import android.util.Log;
 
 import com.google.mediapipe.formats.proto.LandmarkProto;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
+import java.util.Objects;
 
 public class SquatProcessor extends AnnotationsProcessor{
 
@@ -17,7 +21,8 @@ public class SquatProcessor extends AnnotationsProcessor{
     private int kneeDegreesDelta = 5;
     private static final String checkPositionLandmark = "LAnkle";
     private double checkPositionDelta = 0.1;
-    private TechniqueClassifier techniqueClassifier = new TechniqueClassifier();
+    private int squatCalibrateFrames = 7;
+    private SquatClassifier squatClassifier;
     private HashMap<String, ArrayList<Float>> currentSquatState = null;
     private Integer smallestLeftKneeAngle = null;
     private Integer biggestLeftKneeAngle = null;
@@ -29,6 +34,13 @@ public class SquatProcessor extends AnnotationsProcessor{
     private int goodCount = 0;
     private int repCount = 0;
     private ArrayList<Float> currentSquatPos = null;
+    private String[] faker = {"good", "good", "headStraight", "liftingHeels"};
+    private Context context;
+
+    SquatProcessor(Context context){
+        this.context = context;
+        //this.squatClassifier = new SquatClassifier(this.context);
+    }
 
     void setNewState(LandmarkProto.NormalizedLandmarkList poseLandMarks){
         super.setNewState(poseLandMarks);
@@ -38,8 +50,15 @@ public class SquatProcessor extends AnnotationsProcessor{
     }
 
     private void setClassification(){
-        this.goodCount++;
-        this.currentInstruction = "Great Job!";
+        //this.currentInstruction = squatClassifier.getClassification(this.getRepList());
+        if (repCount < faker.length){
+            this.currentInstruction = faker[repCount];
+        } else {
+            this.currentInstruction = "good";
+        }
+        if (Objects.equals(this.currentInstruction, "good")){
+            this.goodCount ++;
+        }
     }
 
     void captureSquat(){
@@ -64,9 +83,8 @@ public class SquatProcessor extends AnnotationsProcessor{
                 this.smallestLeftKneeAngle = this.biggestLeftKneeAngle = lAngle;
             } else {
                 this.repCount++;
-                this.setClassification();
                 this.addToCapturedRep(this.currentSquatState);
-                this.endCapture();
+                this.setClassification();
                 this.resetCapturedRep();
                 this.smallestRightKneeAngle = this.biggestRightKneeAngle = null;
                 this.smallestLeftKneeAngle = this.biggestLeftKneeAngle = null;
@@ -97,6 +115,7 @@ public class SquatProcessor extends AnnotationsProcessor{
             this.currentSquatPos = refPoint;
             this.smallestLeftKneeAngle = this.biggestLeftKneeAngle = null;
             this.resetCapturedRep();
+            this.squatCalibrateFrames = 10;
         } else {
             for (int i = 0; i < 2; i++){
                 if (Math.abs(this.currentSquatPos.get(i) - refPoint.get(i)) > checkPositionDelta){
@@ -104,7 +123,15 @@ public class SquatProcessor extends AnnotationsProcessor{
                     this.resetCapturedRep();
                     this.smallestLeftKneeAngle = this.biggestLeftKneeAngle = null;
                     this.smallestRightKneeAngle = this.biggestRightKneeAngle = null;
+                    this.squatCalibrateFrames = 10;
+                    return;
                 }
+            }
+            if (this.squatCalibrateFrames != 0){
+                this.squatCalibrateFrames--;
+                this.resetCapturedRep();
+                this.smallestLeftKneeAngle = this.biggestLeftKneeAngle = null;
+                this.smallestRightKneeAngle = this.biggestRightKneeAngle = null;
             }
         }
     }
@@ -119,6 +146,27 @@ public class SquatProcessor extends AnnotationsProcessor{
         } else {
             return 0;
         }
+    }
+
+    double[][][] getRepList(){
+        List<double[][]> output = new ArrayList<>();
+        int repLen = this.capturedRep.size();
+        for (int i = 0; i < repLen; i++){
+            List<double[]> tempOutput = new ArrayList<>();
+            HashMap<String, ArrayList<Float>> currState = capturedRep.get(i);
+            for (String squatLandMark: squatLandMarks){
+                ArrayList<Float> landmark = currState.get(squatLandMark);
+                double[] coordinates = {(double) landmark.get(0), (double) landmark.get(1),
+                        (double) landmark.get(2)};
+                tempOutput.add(coordinates);
+            }
+            double[][] tempArray = new double[3][tempOutput.size()];
+            tempArray = tempOutput.toArray(tempArray);
+            output.add(tempArray);
+        }
+        double[][][] tempArray = new double[3][output.get(0).length][output.size()];
+        tempArray = output.toArray(tempArray);
+        return tempArray;
     }
 
     int getGoodRepCount() {return this.goodCount;}

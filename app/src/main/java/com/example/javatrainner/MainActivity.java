@@ -23,7 +23,6 @@ public class MainActivity extends AppCompatActivity {
     private Thread uiThread;
     private Handler handler;
 
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -32,7 +31,7 @@ public class MainActivity extends AppCompatActivity {
 
     private void runTechniqueCorrector(){
         initTechniquePage();
-        squatProcessor = new SquatProcessor();
+        squatProcessor = new SquatProcessor(this);
         visionEngine = this.CreateVisionEngine();
         if (visionEngine != null){
             visionEngine.startVision();

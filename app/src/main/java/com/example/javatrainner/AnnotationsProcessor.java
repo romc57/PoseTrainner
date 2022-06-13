@@ -16,7 +16,8 @@ public class AnnotationsProcessor {
             "LHeel", "RHeel", "LTows", "RTows"};
     protected HashMap<String, ArrayList<Float>> currentState = new HashMap<String, ArrayList<Float>>();
     private static final String TAG = "AnnotationProcessor";
-    protected ArrayList<HashMap>capturedRep = new ArrayList<HashMap>();
+    protected ArrayList<HashMap> capturedRep = new ArrayList<HashMap>();
+    protected ArrayList<ArrayList<HashMap>> capturedReps = new ArrayList<>();
 
 
     void setNewState(NormalizedLandmarkList poseLandMarks){
