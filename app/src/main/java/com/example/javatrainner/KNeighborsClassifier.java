@@ -1,5 +1,7 @@
 package com.example.javatrainner;
 
+import android.util.Log;
+
 import java.util.*;
 
 public class KNeighborsClassifier {
@@ -82,9 +84,12 @@ public class KNeighborsClassifier {
 			for (Neighbor neighbor : dists.subList(0, this.nNeighbors)) {
 				classes[neighbor.clazz]++;
 			}
+			String cl = "";
 			for (int i = 0; i < this.nClasses; i++) {
 				classIdx = classes[i] > classes[classIdx] ? i : classIdx;
+				cl = cl + i + ": " + classes[i] + ", ";
 			}
+			Log.i("KNN", "Got classes: " + cl);
 		}
 		return classIdx;
 	}

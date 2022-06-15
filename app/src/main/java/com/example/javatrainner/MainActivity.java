@@ -26,7 +26,8 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        runTechniqueCorrector();
+        //runTechniqueCorrector();
+        SquatClassifier squatClassifier = new SquatClassifier(this);
     }
 
     private void runTechniqueCorrector(){
