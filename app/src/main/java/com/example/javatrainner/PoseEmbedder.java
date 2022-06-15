@@ -1,4 +1,6 @@
 package com.example.javatrainner;
+import android.util.Log;
+
 import java.util.stream.IntStream;
 
 public class PoseEmbedder {
@@ -6,6 +8,7 @@ public class PoseEmbedder {
 	private final String[] landmarksNames = {"Nose", "LEye_i", "LEye", "REye_o", "REye_i",
 			"REye", "REye_o", "LEar", "REar", "LLip", "RLip", "LShoulder", "RShoulder", "LHip",
 			"RHip", "LKnee", "RKnee", "LAnkle", "RAnkle", "LHeel", "RHeel", "LTows", "RTows"};
+	private String TAG = "PoseEmbedder";
 
 	public PoseEmbedder(double torsoSizeMultiplier) {
 		this.torsoSizeMultiplier = torsoSizeMultiplier;
@@ -13,6 +16,7 @@ public class PoseEmbedder {
 
 	public double[][] embeddedLandmarks(double[][] landmarks) {
 		if (landmarks.length != this.landmarksNames.length) {
+			Log.e(this.TAG, "Rep landmarks don't match defined landmarks");
 			return null;
 		}
 		double[][] normalizeLandmarks = this.normalizePoseLandmarks(landmarks);
@@ -50,8 +54,8 @@ public class PoseEmbedder {
 		double[] rHip = landmarks[this.findIndex("RHip")];
 		double[] lShoulder = landmarks[this.findIndex("LShoulder")];
 		double[] rShoulder = landmarks[this.findIndex("RShoulder")];
-		double[] hips = {lHip[0] + rHip[0] * 0.5, lHip[1] + rHip[1] * 0.5};
-		double[] shoulders = {lShoulder[0] + rShoulder[0] * 0.5, lShoulder[1] + rShoulder[1] * 0.5};
+		double[] hips = {(lHip[0] + rHip[0]) * 0.5, (lHip[1] + rHip[1]) * 0.5};
+		double[] shoulders = {(lShoulder[0] + rShoulder[0]) * 0.5, (lShoulder[1] + rShoulder[1]) * 0.5};
 		double torsoSize = Math.sqrt(Math.pow(shoulders[0] - hips[0], 2) + Math.pow(shoulders[1] - hips[1],
 																					2));
 		double[] poseCenter = this.getPoseCenter(landmarks);

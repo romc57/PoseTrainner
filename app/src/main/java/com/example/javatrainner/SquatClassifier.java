@@ -26,15 +26,21 @@ public class SquatClassifier extends TechniqueClassifier{
 
     String getClassification(double[][][] capturedMotion){
         double[][][] trimmedRep = this.trimRepSize(capturedMotion);
+        if (trimmedRep == null) {
+            return "slowDown";
+        }
         for (int i = 0; i < trimmedRep.length; i++){
             trimmedRep[i] = pe.embeddedLandmarks(trimmedRep[i]);
         }
         int bin = binaryClassifier.predict(trimmedRep);
+        int multi = multiClassifier.predict(trimmedRep);
+        Log.i(this.TAG, "MultiClass classifier: " + multi);
+        Log.i(this.TAG, "Binary classifier: " + bin);
         if (bin == 0) {
-            int multi = multiClassifier.predict(trimmedRep);
+            //int multi = multiClassifier.predict(trimmedRep);
             return this.multiClasses[multi];
         } else {
-            return null;
+            return "good";
         }
     }
 
@@ -131,6 +137,51 @@ public class SquatClassifier extends TechniqueClassifier{
                 }
             }
         }
+    }
+
+    protected double[][][] trimRepSize(double[][][] rep){
+        List<double[][]> newRep = new ArrayList<>();
+        int repLength = rep.length;
+        if (repLength == trimSize) {
+            return rep;
+        } else if (repLength < trimSize){
+            return null;
+        }
+        double minS = -1.0;
+        int minI = -1;
+        for (int i = 0; i < repLength; i++){
+            if (minS == -1.0 && minI == -1.0) {
+                minS = rep[i][0][1];  // Nose Y position
+                minI = i;
+            } else if (rep[i][0][1] > minS) { // Y axis starts at the top of the frame
+                minS = rep[i][0][1];  // Nose Y position
+                minI = i;
+            }
+        }
+        int midSize = (int) Math.ceil((float) this.trimSize / 2);
+        if (midSize > minI){
+            minI = midSize;
+        }
+        if (midSize > repLength - minI) {
+            minI = repLength - midSize - 1;
+        }
+        int goingDown = minI;
+        int goingUp = repLength - minI;
+        double downInterval = goingDown / ((double) trimSize / 2);
+        double upInterval = goingUp / ((double) trimSize / 2);
+        double j = 0;
+        while (newRep.size() < trimSize && Math.floor(j) < repLength) {
+            int idx = (int) Math.floor(j);
+            if (newRep.size() < midSize) {
+                newRep.add(rep[idx]);
+                j += downInterval;
+            } else {
+                newRep.add(rep[idx]);
+                j += upInterval;
+            }
+        }
+        Log.i(this.TAG, "Trimmed rep to size " + newRep.size());
+        return (newRep.toArray(new double[3][newRep.get(0).length][newRep.size()])) ;
     }
 }
 

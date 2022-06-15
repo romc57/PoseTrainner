@@ -2,14 +2,12 @@ package com.example.javatrainner;
 
 import android.content.Context;
 import android.util.Log;
-
 import com.google.mediapipe.formats.proto.LandmarkProto;
-
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Objects;
+import java.util.concurrent.ThreadLocalRandom;
 
 public class SquatProcessor extends AnnotationsProcessor{
 
@@ -34,12 +32,15 @@ public class SquatProcessor extends AnnotationsProcessor{
     private int goodCount = 0;
     private int repCount = 0;
     private ArrayList<Float> currentSquatPos = null;
-    private String[] faker = {"good", "good", "headStraight", "liftingHeels"};
+    private final String[] goodFeedback = {"Very good!", "Doing good, keep going!",
+            "Are you a professional?", "Great rep!"};
+    private final String[] badFeedback = {"You can do better.\nFocus!",
+            "Not good enough!", "Try to listen to the instructions", "Everyone sucked once,\ntry again!"};
     private Context context;
 
     SquatProcessor(Context context){
         this.context = context;
-        //this.squatClassifier = new SquatClassifier(this.context);
+        this.squatClassifier = new SquatClassifier(this.context);
     }
 
     void setNewState(LandmarkProto.NormalizedLandmarkList poseLandMarks){
@@ -50,14 +51,28 @@ public class SquatProcessor extends AnnotationsProcessor{
     }
 
     private void setClassification(){
-        //this.currentInstruction = squatClassifier.getClassification(this.getRepList());
-        if (repCount < faker.length){
-            this.currentInstruction = faker[repCount];
-        } else {
-            this.currentInstruction = "good";
+        double[][][] arrayRep = this.getRepList();
+        int frameCount = arrayRep.length;
+        int landmarkCount = arrayRep[0].length;
+        int dimSize = arrayRep[0][0].length;
+        Log.i(this.TAG, String.format("Starting to process a rep with %2d frames, %2d landmarks, " +
+                "%2d dimensions", frameCount, landmarkCount, dimSize));
+        this.currentTag = squatClassifier.getClassification(arrayRep);
+        if (this.currentTag.isEmpty()) {
+            Log.e(this.TAG, "Something went wrong during classification");
+            return;
+        } else if (this.currentTag == "slowDown"){
+            this.currentInstruction = "Didn't catch that one.\nPlease slow down.";
+            return;
         }
-        if (Objects.equals(this.currentInstruction, "good")){
+        this.repCount++;
+        Log.i(this.TAG, String.format("Rep got tagged as %s", this.currentTag));
+        if (Objects.equals(this.currentTag, "good")){
+            this.currentInstruction = this.getRandomFeedback(this.goodFeedback);
             this.goodCount ++;
+        } else {
+            //this.currentInstruction = this.getRandomFeedback(this.badFeedback);
+            this.currentInstruction = this.currentTag;
         }
     }
 
@@ -65,8 +80,6 @@ public class SquatProcessor extends AnnotationsProcessor{
         this.checkSquatPosition();
         Integer lAngle = this.calculateAngle("LHip", "LKnee", "LAnkle");
         Integer rAngle = this.calculateAngle("RHip", "RKnee", "RAnkle");
-        Log.i(this.TAG, "Angles: " + String.valueOf(rAngle) + " " + String.valueOf(lAngle));
-        Log.i(this.TAG, "RepCount: " + String.valueOf(this.repCount));
         if(lAngle == null || rAngle == null){return;}
         if (this.smallestLeftKneeAngle == null || this.biggestLeftKneeAngle == null){
             this.smallestLeftKneeAngle = this.biggestLeftKneeAngle = lAngle;
@@ -82,7 +95,6 @@ public class SquatProcessor extends AnnotationsProcessor{
                 this.smallestRightKneeAngle = this.biggestRightKneeAngle = rAngle;
                 this.smallestLeftKneeAngle = this.biggestLeftKneeAngle = lAngle;
             } else {
-                this.repCount++;
                 this.addToCapturedRep(this.currentSquatState);
                 this.setClassification();
                 this.resetCapturedRep();
@@ -146,6 +158,11 @@ public class SquatProcessor extends AnnotationsProcessor{
         } else {
             return 0;
         }
+    }
+
+    private String getRandomFeedback(String[] feedbackOptions){
+        int randomInt = ThreadLocalRandom.current().nextInt(0, feedbackOptions.length + 1);
+        return feedbackOptions[randomInt];
     }
 
     double[][][] getRepList(){

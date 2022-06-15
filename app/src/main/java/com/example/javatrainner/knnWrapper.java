@@ -1,6 +1,6 @@
 package com.example.javatrainner;
 
-import java.util.Arrays;
+import android.util.Log;
 
 public class knnWrapper {
 	private KNeighborsClassifier knnClassifier;
@@ -12,15 +12,21 @@ public class knnWrapper {
 
 	public int predict(double [][][] x) {
 		return this.knnClassifier.predict(flatten(x));
-
 	}
-	private double[] flatten(double [][][] x) {
-		double[] newX = Arrays.stream(x)
-				.flatMap(Arrays::stream)
-				.flatMapToDouble(Arrays::stream)
-				.toArray();
 
-		System.out.println(Arrays.toString(newX));
-		return newX;
+	private double[] flatten(double [][][] x) {
+		double[] output = new double[x.length * x[0].length * x[0][0].length];
+		String test = "";
+		for (int i = 0; i < x.length; i++){
+			for (int j = 0; j < x[i].length; j++){
+				for (int k = 0; k < x[i][j].length; k++){
+					output[i * j * k + j * k + k] = x[i][j][k];
+					test = test + x[i][j][k] + "; ";
+				}
+			}
+		}
+		Log.i("Rep", "Flat to size " + output.length);
+		Log.i("Rep: ", test);
+		return output;
 	}
 }
