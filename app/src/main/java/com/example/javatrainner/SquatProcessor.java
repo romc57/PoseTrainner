@@ -38,7 +38,9 @@ public class SquatProcessor extends AnnotationsProcessor{
             "Not good enough!", "Try to listen to the instructions", "Everyone sucked once,\ntry again!"};
     private Context context;
 
+
     SquatProcessor(Context context){
+
         this.context = context;
         this.squatClassifier = new SquatClassifier(this.context);
     }
