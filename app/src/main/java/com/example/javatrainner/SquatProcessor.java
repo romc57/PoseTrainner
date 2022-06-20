@@ -71,7 +71,7 @@ public class SquatProcessor extends AnnotationsProcessor{
             this.currentInstruction = this.getRandomFeedback(this.goodFeedback);
             this.goodCount ++;
         } else {
-            //this.currentInstruction = this.getRandomFeedback(this.badFeedback);
+            this.currentInstruction = this.getRandomFeedback(this.badFeedback);
             this.currentInstruction = this.currentTag;
         }
     }
@@ -161,7 +161,7 @@ public class SquatProcessor extends AnnotationsProcessor{
     }
 
     private String getRandomFeedback(String[] feedbackOptions){
-        int randomInt = ThreadLocalRandom.current().nextInt(0, feedbackOptions.length + 1);
+        int randomInt = ThreadLocalRandom.current().nextInt(0, feedbackOptions.length);
         return feedbackOptions[randomInt];
     }
 
