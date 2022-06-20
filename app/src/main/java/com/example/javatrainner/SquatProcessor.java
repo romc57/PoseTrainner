@@ -36,6 +36,7 @@ public class SquatProcessor extends AnnotationsProcessor{
             "Are you a professional?", "Great rep!"};
     private final String[] badFeedback = {"You can do better.\nFocus!",
             "Not good enough!", "Try to listen to the instructions", "Everyone sucked once,\ntry again!"};
+    public String currentDrill = "5 Squats";
     private Context context;
 
     SquatProcessor(Context context){
@@ -158,6 +159,10 @@ public class SquatProcessor extends AnnotationsProcessor{
         } else {
             return 0;
         }
+    }
+
+    String getCurrentDrill() {
+        return this.currentDrill;
     }
 
     private String getRandomFeedback(String[] feedbackOptions){

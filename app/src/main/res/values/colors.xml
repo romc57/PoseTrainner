@@ -7,4 +7,21 @@
     <color name="teal_700">#FF018786</color>
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
+    <color name="colorPrimary">#008577</color>
+    <color name="colorPrimaryDark">#00574B</color>
+    <color name="colorAccent">#D81B60</color>
+    <color name="_bg__workout_summary_color">#f6f6f6</color>
+    <color name="primary_button___filled_ek1_color">#484848</color>
+    <color name="____label_color">#ffffff</color>
+    <color name="container_color">#ffffff</color>
+    <color name="_10_28_color">#000000</color>
+    <color name="____title_color">#0196e5</color>
+    <color name="calories_burned_color">#fa8f86</color>
+    <color name="_341_calories_color">#7b7b7b</color>
+    <color name="_10__since_last_workout_color">#ff6a6a</color>
+    <color name="accuracy_color">#00c2f2</color>
+    <color name="_10__since_last_workout_ek1_color">#62ce51</color>
+    <color name="time_elapsed_color">#ffb800</color>
+    <color name="average_heart_rate_color">#ed76cc</color>
+    <color name="_bg__icon_color">#ffffff</color>
 </resources>

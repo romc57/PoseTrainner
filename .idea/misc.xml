@@ -3,15 +3,64 @@
   <component name="DesignSurface">
     <option name="filePathToZoomLevelMap">
       <map>
+        <entry key="../../../../layout/custom_preview.xml" value="0.1" />
         <entry key="app/src/main/res/drawable-v24/ic_launcher_foreground.xml" value="0.337" />
+        <entry key="app/src/main/res/drawable-xxhdpi/profile_circle.xml" value="0.168" />
+        <entry key="app/src/main/res/drawable-xxhdpi/statistics.xml" value="0.15" />
+        <entry key="app/src/main/res/drawable/_bg__icon_shape.xml" value="0.202" />
+        <entry key="app/src/main/res/drawable/_bg__workout_summary_shape.xml" value="0.202" />
         <entry key="app/src/main/res/drawable/back.xml" value="0.143" />
+        <entry key="app/src/main/res/drawable/calibration.xml" value="0.214" />
+        <entry key="app/src/main/res/drawable/circle_shape.xml" value="0.237" />
+        <entry key="app/src/main/res/drawable/container_shape.xml" value="0.202" />
+        <entry key="app/src/main/res/drawable/ellipse_60_ek1_shape.xml" value="0.202" />
+        <entry key="app/src/main/res/drawable/ellipse_60_shape.xml" value="0.202" />
+        <entry key="app/src/main/res/drawable/frame_2974_ek1_shape.xml" value="0.202" />
+        <entry key="app/src/main/res/drawable/frame_2974_ek3_shape.xml" value="0.202" />
+        <entry key="app/src/main/res/drawable/frame_2975_ek1_shape.xml" value="0.1" />
+        <entry key="app/src/main/res/drawable/frame_2975_ek3_shape.xml" value="0.1" />
+        <entry key="app/src/main/res/drawable/frame_3008_ek1_shape.xml" value="0.202" />
+        <entry key="app/src/main/res/drawable/home.xml" value="0.33" />
+        <entry key="app/src/main/res/drawable/ic_android_black_24dp.xml" value="0.168" />
+        <entry key="app/src/main/res/drawable/ic_baseline_pause_24.xml" value="0.237" />
+        <entry key="app/src/main/res/drawable/ic_baseline_skip_next_24.xml" value="0.237" />
+        <entry key="app/src/main/res/drawable/ic_channel_background.xml" value="0.1875" />
+        <entry key="app/src/main/res/drawable/ic_home.xml" value="0.168" />
         <entry key="app/src/main/res/drawable/ic_launcher_background.xml" value="0.1285" />
+        <entry key="app/src/main/res/drawable/landing.xml" value="0.33" />
+        <entry key="app/src/main/res/drawable/list_icon.xml" value="0.167" />
+        <entry key="app/src/main/res/drawable/munu_icon.xml" value="0.339" />
+        <entry key="app/src/main/res/drawable/next_drill_icon.xml" value="0.339" />
+        <entry key="app/src/main/res/drawable/pause_icon.xml" value="0.339" />
+        <entry key="app/src/main/res/drawable/primary_button___filled_ek1_shape.xml" value="0.202" />
+        <entry key="app/src/main/res/drawable/profile_circle.xml" value="0.237" />
+        <entry key="app/src/main/res/drawable/profile_creation.xml" value="0.15" />
+        <entry key="app/src/main/res/drawable/program_details.xml" value="0.1" />
+        <entry key="app/src/main/res/drawable/rectangle.xml" value="0.1" />
+        <entry key="app/src/main/res/drawable/rectangle_1_shape.xml" value="0.1" />
+        <entry key="app/src/main/res/drawable/rectangle_2.xml" value="0.1" />
+        <entry key="app/src/main/res/drawable/reps_shape.xml" value="0.237" />
+        <entry key="app/src/main/res/drawable/rounded_instruction.xml" value="0.237" />
+        <entry key="app/src/main/res/drawable/sign_in.xml" value="0.25" />
+        <entry key="app/src/main/res/drawable/sign_up.xml" value="0.33" />
+        <entry key="app/src/main/res/drawable/squat_great_rep.xml" value="0.25" />
+        <entry key="app/src/main/res/drawable/squat_try_again.xml" value="0.1" />
+        <entry key="app/src/main/res/drawable/welcome.xml" value="0.1" />
+        <entry key="app/src/main/res/drawable/working_status_line_bad.xml" value="0.339" />
+        <entry key="app/src/main/res/drawable/working_status_line_good.xml" value="0.237" />
+        <entry key="app/src/main/res/drawable/workout_summary.xml" value="0.33" />
+        <entry key="app/src/main/res/drawable/workout_tryagain.xml" value="0.1" />
         <entry key="app/src/main/res/layout/Calibration.xml" value="0.3546875" />
         <entry key="app/src/main/res/layout/activity_main.xml" value="0.17604166666666668" />
         <entry key="app/src/main/res/layout/back.xml" value="0.3703125" />
-        <entry key="app/src/main/res/layout/home.xml" value="0.3703125" />
+        <entry key="app/src/main/res/layout/home.xml" value="0.33" />
+        <entry key="app/src/main/res/layout/layout.xml" value="0.3885416666666667" />
+        <entry key="app/src/main/res/layout/loading.xml" value="0.33" />
+        <entry key="app/src/main/res/layout/program_de.xml" value="0.67" />
         <entry key="app/src/main/res/layout/program_details.xml" value="0.3703125" />
-        <entry key="app/src/main/res/layout/technique_correct.xml" value="0.32339089481946626" />
+        <entry key="app/src/main/res/layout/technique_correct.xml" value="0.1" />
+        <entry key="app/src/main/res/layout/train.xml" value="0.13389121338912133" />
+        <entry key="app/src/main/res/layout/train_summery.xml" value="0.1" />
         <entry key="app/src/main/res/mipmap-anydpi-v26/ic_channel.xml" value="0.234" />
         <entry key="app/src/main/res/mipmap-anydpi-v26/ic_launcher.xml" value="0.199" />
         <entry key="app/src/main/res/mipmap-anydpi-v26/ic_launcher_round.xml" value="0.179" />
@@ -23,5 +72,12 @@
   </component>
   <component name="ProjectType">
     <option name="id" value="Android" />
+  </component>
+  <component name="VisualizationToolProject">
+    <option name="state">
+      <ProjectState>
+        <option name="scale" value="0.18" />
+      </ProjectState>
+    </option>
   </component>
 </project>
