@@ -26,6 +26,9 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <activity android:name=".TrainSummeryActivity" />
+        <activity android:name=".TechniqueCorrectActivity"/>
+        <activity android:name=".LoadingScreenActivity"/>
 
         <meta-data android:name="binaryGraphName" android:value="pose_tracking_gpu.binarypb"/>
         <meta-data android:name="inputVideoStreamName" android:value="input_video"/>

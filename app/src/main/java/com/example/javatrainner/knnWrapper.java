@@ -3,7 +3,7 @@ package com.example.javatrainner;
 import android.util.Log;
 
 public class knnWrapper {
-	private KNeighborsClassifier knnClassifier;
+	public KNeighborsClassifier knnClassifier;
 
 	public knnWrapper(int nNeighbors, int nClasses,
 					  double [][] x, int[] y) {
@@ -17,11 +17,13 @@ public class knnWrapper {
 	private double[] flatten(double [][][] x) {
 		double[] output = new double[x.length * x[0].length * x[0][0].length];
 		String test = "";
+		int l = 0;
 		for (int i = 0; i < x.length; i++){
 			for (int j = 0; j < x[i].length; j++){
 				for (int k = 0; k < x[i][j].length; k++){
-					output[i * j * k + j * k + k] = x[i][j][k];
+					output[l] = x[i][j][k];
 					test = test + x[i][j][k] + "; ";
+					l++;
 				}
 			}
 		}

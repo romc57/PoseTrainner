@@ -19,7 +19,7 @@ public class SquatProcessor extends AnnotationsProcessor{
     private int kneeDegreesDelta = 5;
     private static final String checkPositionLandmark = "LAnkle";
     private double checkPositionDelta = 0.1;
-    private int squatCalibrateFrames = 7;
+    private int squatCalibrateFrames = 10;
     private SquatClassifier squatClassifier;
     private HashMap<String, ArrayList<Float>> currentSquatState = null;
     private Integer smallestLeftKneeAngle = null;
@@ -27,16 +27,18 @@ public class SquatProcessor extends AnnotationsProcessor{
     private Integer smallestRightKneeAngle = null;
     private Integer biggestRightKneeAngle = null;
     private String currentTag;
+    public int sessionReps = 5;
     private String currentInstruction = "Squat away!";
     private boolean goodDetection = false;
     private int goodCount = 0;
     private int repCount = 0;
+    public boolean currentSquatStatus = true;
     private ArrayList<Float> currentSquatPos = null;
+    private String currentDrill = this.sessionReps + " Squats";
     private final String[] goodFeedback = {"Very good!", "Doing good, keep going!",
             "Are you a professional?", "Great rep!"};
     private final String[] badFeedback = {"You can do better.\nFocus!",
             "Not good enough!", "Try to listen to the instructions", "Everyone sucked once,\ntry again!"};
-    public String currentDrill = "5 Squats";
     private Context context;
 
     SquatProcessor(Context context){
@@ -47,7 +49,9 @@ public class SquatProcessor extends AnnotationsProcessor{
     void setNewState(LandmarkProto.NormalizedLandmarkList poseLandMarks){
         super.setNewState(poseLandMarks);
         this.checkLandMarks();
-        if (!this.goodDetection){return;}
+        if (!this.goodDetection){
+            return;
+        }
         this.captureSquat();
     }
 
@@ -71,9 +75,10 @@ public class SquatProcessor extends AnnotationsProcessor{
         if (Objects.equals(this.currentTag, "good")){
             this.currentInstruction = this.getRandomFeedback(this.goodFeedback);
             this.goodCount ++;
+            this.currentSquatStatus = true;
         } else {
-            //this.currentInstruction = this.getRandomFeedback(this.badFeedback);
-            this.currentInstruction = this.currentTag;
+            this.currentInstruction = this.getRandomFeedback(this.badFeedback);
+            this.currentSquatStatus = false;
         }
     }
 
@@ -153,6 +158,10 @@ public class SquatProcessor extends AnnotationsProcessor{
         return this.repCount;
     }
 
+    String getCurrentDrill(){
+        return this.currentDrill;
+    }
+
     float getSuccessPercentage() {
         if (this.repCount != 0){
             return (float) this.goodCount / this.repCount;
@@ -161,12 +170,8 @@ public class SquatProcessor extends AnnotationsProcessor{
         }
     }
 
-    String getCurrentDrill() {
-        return this.currentDrill;
-    }
-
     private String getRandomFeedback(String[] feedbackOptions){
-        int randomInt = ThreadLocalRandom.current().nextInt(0, feedbackOptions.length + 1);
+        int randomInt = ThreadLocalRandom.current().nextInt(0, feedbackOptions.length);
         return feedbackOptions[randomInt];
     }
 

@@ -95,11 +95,17 @@
             android:id="@+id/PosePresent"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:background="@color/primary_button___filled_ek1_color"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent"></FrameLayout>
+            app:layout_constraintTop_toTopOf="parent">
+
+            <ImageView
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:src="@mipmap/ic_channel_foreground" />
+
+        </FrameLayout>
 
         <ImageView
             android:id="@+id/flipCam"
@@ -110,6 +116,21 @@
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:srcCompat="@drawable/frame__12" />
+
+        <TextView
+            android:id="@+id/shortComment"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="50dp"
+            android:layout_marginStart="20dp"
+            android:layout_marginEnd="20dp"
+            android:textAlignment="center"
+            android:text="Good one!"
+            android:textSize="60dp"
+            android:background="@drawable/short_comment_shape"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 
